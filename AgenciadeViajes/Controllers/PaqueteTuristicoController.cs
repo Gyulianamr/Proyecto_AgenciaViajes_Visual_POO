@@ -11,37 +11,76 @@ using System.Web.Http;
 
 namespace AgenciadeViajes.Controllers
 {
+   
     public class PaquetesTuristicosController : ApiController
     {
-
         private Proyectodb db = new Proyectodb();
 
-        // GET: api/PaqueteTuristico
-        public IEnumerable<Paquete_Turistico> Get()
+        /// <summary>
+        /// Obtiene la lista de todos los paquetes turísticos.
+        /// </summary>
+        /// <returns>Lista de paquetes turísticos</returns>
+        public IHttpActionResult Get()
+        {
+            var verpaque = from P in db.PaqueteTuristicos
+                           select new
+                           {
+                               Nombre_paquete = P.Nombre,
+                               VueloId = P.Vuelo != null ? P.Vuelo.Id : (int?)null,
+                               OrigenDestino = P.Vuelo != null && P.Vuelo.Origen != null ? P.Vuelo.Origen.NomDestino : null,
+                               DestinoNombre = P.Vuelo != null && P.Vuelo.Destino != null ? P.Vuelo.Destino.NomDestino : null,
+                               HotelNombre = P.Hotel != null ? P.Hotel.Nombre : null,
+                               ActividadesNombre = P.Actividades != null ? P.Actividades.Nombre : null,
+                               GuiaTuristicoNombre = P.GuiaTuristico != null ? P.GuiaTuristico.Nombre : null,
+                               SeguroNombre = P.Seguro != null ? P.Seguro.Nombre : null,
+                               PrecioTotal = P.PrecioTotal
+                           };
+
+            // Verificar si hay resultados
+            if (!verpaque.Any())
             {
-                return db.PaqueteTuristicos
-                    .Include(p => p.Destino)
-                    .Include(p => p.Vuelo)
-                    .Include(p => p.Hotel)
-                    .Include(p => p.Seguro)
-                    .Include(p => p.GuiaTuristico)
-                    .Include(p => p.Actividades);
+                return NotFound();
             }
 
-            // GET: api/PaqueteTuristico/5
-            public IHttpActionResult GetBuscar(int id)
-            {
-                Paquete_Turistico paquete = db.PaqueteTuristicos
-                    .Include(p => p.Destino)
-                    .Include(p => p.Vuelo)
-                    .Include(p => p.Hotel)
-                    .FirstOrDefault(p => p.Id == id);
+            return Ok(verpaque);
+        }
 
-                if (paquete == null) return NotFound();
-                return Ok(paquete);
+        /// <summary>
+        /// Obtiene un paquete turístico por su ID.
+        /// </summary>
+        /// <param name="id">ID del paquete turístico</param>
+        /// <returns>Paquete turístico correspondiente al ID</returns>
+        public IHttpActionResult Get(int id)
+        {
+            var verpaque = from P in db.PaqueteTuristicos
+                           where P.Id == id
+                           select new
+                           {
+                               Nombre_paquete = P.Nombre,
+                               VueloId = P.Vuelo != null ? P.Vuelo.Id : (int?)null,
+                               OrigenDestino = P.Vuelo != null && P.Vuelo.Origen != null ? P.Vuelo.Origen.NomDestino : null,
+                               DestinoNombre = P.Vuelo != null && P.Vuelo.Destino != null ? P.Vuelo.Destino.NomDestino : null,
+                               HotelNombre = P.Hotel != null ? P.Hotel.Nombre : null,
+                               ActividadesNombre = P.Actividades != null ? P.Actividades.Nombre : null,
+                               GuiaTuristicoNombre = P.GuiaTuristico != null ? P.GuiaTuristico.Nombre : null,
+                               SeguroNombre = P.Seguro != null ? P.Seguro.Nombre : null,
+                               PrecioTotal = P.PrecioTotal
+                           };
+
+            // Verificar si no hay resultados
+            if (!verpaque.Any())
+            {
+                return NotFound();
             }
 
-        // POST: api/PaqueteTuristico
+            return Ok(verpaque);
+        }
+
+        /// <summary>
+        /// Crea un nuevo paquete turístico.
+        /// </summary>
+        /// <param name="paquete">Datos del nuevo paquete turístico</param>
+        /// <returns>Resultado de la operación de creación</returns>
         public IHttpActionResult Post(Paquete_Turistico paquete)
         {
             try
@@ -56,14 +95,13 @@ namespace AgenciadeViajes.Controllers
                     return BadRequest("El campo DestinoId es requerido");
                 }
 
-                // Validar destino (obligatorio)
                 var destino = db.Destinos.Find(paquete.DestinoId);
                 if (destino == null)
                 {
                     return BadRequest("Destino no encontrado");
                 }
 
-                // Validar entidades opcionales
+                // Validar si el vuelo, hotel, seguro, guía turístico y actividades existen
                 if (paquete.VueloId.HasValue && db.Vuelos.Find(paquete.VueloId.Value) == null)
                 {
                     return BadRequest("Vuelo no encontrado");
@@ -89,7 +127,7 @@ namespace AgenciadeViajes.Controllers
                     return BadRequest("Actividad no encontrada");
                 }
 
-                // Cargar entidades relacionadas
+                // Asignar las relaciones correspondientes
                 paquete.Vuelo = paquete.VueloId.HasValue ? db.Vuelos.Find(paquete.VueloId.Value) : null;
                 paquete.Hotel = paquete.HotelId.HasValue ? db.Hotel.Find(paquete.HotelId.Value) : null;
                 paquete.Seguro = paquete.SeguroId.HasValue ? db.Seguros.Find(paquete.SeguroId.Value) : null;
@@ -97,10 +135,9 @@ namespace AgenciadeViajes.Controllers
                 paquete.Actividades = paquete.ActividadesId.HasValue ? db.Actividades.Find(paquete.ActividadesId.Value) : null;
                 paquete.Destino = destino;
 
-                // Calcular precio
+                // Calcular el precio total
                 paquete.PrecioTotal = paquete.CalcularCostoTotal();
 
-                // Guardar
                 db.PaqueteTuristicos.Add(paquete);
                 db.SaveChanges();
 
@@ -109,8 +146,8 @@ namespace AgenciadeViajes.Controllers
             catch (DbEntityValidationException ex)
             {
                 var errorMessages = ex.EntityValidationErrors
-                                    .SelectMany(x => x.ValidationErrors)
-                                    .Select(x => x.ErrorMessage);
+                                     .SelectMany(x => x.ValidationErrors)
+                                     .Select(x => x.ErrorMessage);
                 return BadRequest(string.Join("; ", errorMessages));
             }
             catch (Exception ex)
@@ -119,105 +156,149 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // PUT: api/PaqueteTuristico/5
+        /// <summary>
+        /// Actualiza un paquete turístico existente.
+        /// </summary>
+        /// <param name="id">ID del paquete turístico a actualizar</param>
+        /// <param name="paquete">Nuevo paquete turístico con los datos actualizados</param>
+        /// <returns>Resultado de la operación de actualización</returns>
         public IHttpActionResult Put(int id, Paquete_Turistico paquete)
+        {
+            try
             {
-                try
-                {
-                    if (id != paquete.Id)
-                        return BadRequest("ID no coincide");
+                if (id != paquete.Id)
+                    return BadRequest("ID no coincide");
 
-                    var existente = db.PaqueteTuristicos
-                        .Include(p => p.Destino)
-                        .FirstOrDefault(p => p.Id == id);
+                var existente = db.PaqueteTuristicos
+                                  .Include(p => p.Destino)
+                                  .FirstOrDefault(p => p.Id == id);
 
-                    if (existente == null) return NotFound();
+                if (existente == null) return NotFound();
 
-                    // Actualizar relaciones
-                    existente.VueloId = paquete.VueloId;
-                    existente.HotelId = paquete.HotelId;
-                    existente.SeguroId = paquete.SeguroId;
-                    existente.GuiaTuristicoId = paquete.GuiaTuristicoId;
-                    existente.ActividadesId = paquete.ActividadesId;
+                // Actualizar los campos del paquete
+                existente.VueloId = paquete.VueloId;
+                existente.HotelId = paquete.HotelId;
+                existente.SeguroId = paquete.SeguroId;
+                existente.GuiaTuristicoId = paquete.GuiaTuristicoId;
+                existente.ActividadesId = paquete.ActividadesId;
+                existente.Nombre = paquete.Nombre;
+                existente.FechaExpiracion = paquete.FechaExpiracion;
+                existente.Estado = paquete.Estado;
+                existente.Destino = db.Destinos.Find(paquete.Destino.Id);
 
-                    // Actualizar propiedades básicas
-                    existente.Nombre = paquete.Nombre;
-                    existente.FechaExpiracion = paquete.FechaExpiracion;
-                    existente.Estado = paquete.Estado;
-                    existente.Destino = db.Destinos.Find(paquete.Destino.Id);
+                // Calcular el nuevo precio total
+                existente.PrecioTotal = existente.CalcularCostoTotal();
 
-                    // Recalcular precio
-                    existente.PrecioTotal = existente.CalcularCostoTotal();
-
-                    db.Entry(existente).State = EntityState.Modified;
-                    db.SaveChanges();
-
-                    return Ok(existente);
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
-            }
-
-            // DELETE: api/PaqueteTuristico/5
-            public IHttpActionResult Delete(int id)
-            {
-                Paquete_Turistico paquete = db.PaqueteTuristicos.Find(id);
-                if (paquete == null) return NotFound();
-
-                db.PaqueteTuristicos.Remove(paquete);
+                db.Entry(existente).State = EntityState.Modified;
                 db.SaveChanges();
-                return Ok(paquete);
+
+                return Ok(existente);
             }
-
-            [HttpGet]
-            [Route("api/PaqueteTuristico/buscar-por-destino-precio")]
-            public IHttpActionResult BuscarPorDestinoYPrecio(int destinoId, double precioMaximo)
+            catch (Exception ex)
             {
-                var resultados = db.PaqueteTuristicos
-                    .Where(p => p.Destino.Id == destinoId && p.PrecioTotal <= precioMaximo)
-                    .OrderBy(p => p.PrecioTotal)
-                    .Select(p => new {
-                        p.Id,
-                        p.Nombre,
-                        Destino = p.Destino.NomDestino,
-                        p.PrecioTotal,
-                        Vuelo = p.Vuelo != null ? p.Vuelo.Compañia : "Sin vuelo",
-                        Hotel = p.Hotel != null ? p.Hotel.Nombre : "Sin hotel",
-                        Seguro = p.Seguro != null ? p.Seguro.Tipo : "Sin seguro"
-                    }).ToList();
-
-                if (!resultados.Any()) return NotFound();
-                return Ok(resultados);
-            }
-
-            [HttpGet]
-            [Route("api/PaqueteTuristico/buscar-por-nombre-precio")]
-            public IHttpActionResult BuscarPorNombreYPrecio(string nombre, double precioMinimo)
-            {
-                var resultados = db.PaqueteTuristicos
-                    .Where(p => p.Nombre.Contains(nombre) && p.PrecioTotal >= precioMinimo)
-                    .OrderBy(p => p.PrecioTotal)
-                    .Select(p => new {
-                        p.Id,
-                        p.Nombre,
-                        p.PrecioTotal,
-                        FechaExpiracion = p.FechaExpiracion.ToString("yyyy-MM-dd"),
-                        Estado = p.Estado ? "Activo" : "Inactivo"
-                    }).ToList();
-
-                if (!resultados.Any()) return NotFound();
-                return Ok(resultados);
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                if (disposing)
-                {
-                    db.Dispose();
-                }
-                base.Dispose(disposing);
+                return BadRequest(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Elimina un paquete turístico por su ID.
+        /// </summary>
+        /// <param name="id">ID del paquete turístico a eliminar</param>
+        /// <returns>Resultado de la operación de eliminación</returns>
+        public IHttpActionResult Delete(int id)
+        {
+            Paquete_Turistico paquete = db.PaqueteTuristicos.Find(id);
+            if (paquete == null) return NotFound();
+
+            db.PaqueteTuristicos.Remove(paquete);
+            db.SaveChanges();
+            return Ok(paquete);
+        }
+
+        /// <summary>
+        /// Busca paquetes turísticos por destino y precio máximo.
+        /// </summary>
+        /// <param name="destinoId">ID del destino</param>
+        /// <param name="precioMaximo">Precio máximo</param>
+        /// <returns>Lista de paquetes turísticos que cumplen con los criterios</returns>
+        [HttpGet]
+        [Route("api/PaqueteTuristico/buscar-por-destino-precio")]
+        public IHttpActionResult BuscarPorDestinoYPrecio(int destinoId, double precioMaximo)
+        {
+            if (destinoId <= 0)
+            {
+                return BadRequest("El ID del destino debe ser mayor que cero.");
+            }
+
+            if (precioMaximo <= 0)
+            {
+                return BadRequest("El precio máximo debe ser mayor que cero.");
+            }
+
+            var resultados = from p in db.PaqueteTuristicos
+                             where p.Destino != null && p.Destino.Id == destinoId && p.PrecioTotal <= precioMaximo
+                             orderby p.PrecioTotal
+                             select new
+                             {
+                                 p.Id,
+                                 p.Nombre,
+                                 Destino = p.Destino != null ? p.Destino.NomDestino : "Destino no especificado",
+                                 p.PrecioTotal,
+                                 Vuelo = p.Vuelo != null ? p.Vuelo.Compañia : "Sin vuelo",
+                                 Hotel = p.Hotel != null ? p.Hotel.Nombre : "Sin hotel",
+                                 Seguro = p.Seguro != null ? p.Seguro.Tipo : "Sin seguro"
+                             };
+
+            if (!resultados.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(resultados);
+        }
+
+        /// <summary>
+        /// Busca paquetes turísticos por nombre y precio mínimo.
+        /// </summary>
+        /// <param name="nombre">Nombre del paquete turístico</param>
+        /// <param name="precioMinimo">Precio mínimo</param>
+        /// <returns>Lista de paquetes turísticos que cumplen con los criterios</returns>
+        [HttpGet]
+        [Route("api/PaqueteTuristico/buscar-por-nombre-precio")]
+        public IHttpActionResult BuscarPorNombreYPrecio(string nombre, double precioMinimo)
+        {
+            if (string.IsNullOrEmpty(nombre))
+            {
+                return BadRequest("El nombre no puede estar vacío.");
+            }
+
+            if (precioMinimo <= 0)
+            {
+                return BadRequest("El precio mínimo debe ser mayor que cero.");
+            }
+
+            var resultados = from p in db.PaqueteTuristicos
+                             where p.Nombre.Contains(nombre) && p.PrecioTotal >= precioMinimo
+                             orderby p.PrecioTotal
+                             select new
+                             {
+                                 p.Id,
+                                 p.Nombre,
+                                 p.PrecioTotal,
+                                 Vuelo = p.Vuelo != null ? p.Vuelo.Compañia : "Sin vuelo",
+                                 Hotel = p.Hotel != null ? p.Hotel.Nombre : "Sin hotel",
+                                 Seguro = p.Seguro != null ? p.Seguro.Tipo : "Sin seguro"
+                             };
+
+            if (!resultados.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(resultados);
+        }
+
+      
     }
+
+}
