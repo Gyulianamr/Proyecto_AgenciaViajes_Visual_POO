@@ -15,37 +15,78 @@ namespace AgenciadeViajes.Controllers
     {
         private Proyectodb db = new Proyectodb();
 
-        // GET: api/Cotizaciones
-        [HttpGet]
-        public IEnumerable<Cotizacion> Get()
+        /// <summary>
+        /// obtiene las cotizaciones disponibles
+        /// </summary>
+        /// <returns>Muestra todas las listas de cotizaciones disponibles</returns>
+       
+        public IHttpActionResult Get()
         {
-            return db.Cotizaciones
-                .Include(c => c.Cliente)
-                .Include(c => c.Agente_Responsable)
-                .Include(c => c.Paquete);
+            var vercoti = from C in db.Cotizaciones
+                          join A in db.AgenteViajes
+                          on C.Agente_Responsable.Id equals A.Id
+                          join P in db.PaqueteTuristicos
+                          on C.Paquete.Id equals P.Id
+                          join Clien in db.Clientes
+                          on C.Cliente.Id equals Clien.Id
+                          select new
+                          {
+                              IdCotizacion = C.Id,
+                              cantidad_Personas= C.Cantidad_Personas,
+                              cliente= Clien.Nombre+" "+ Clien.Apellido, 
+                              Agente_Responsable = A.Nombre + " " + A.Apellido,
+                              Nombre_paquete = P.Nombre,
+                              destino = P.Destino.NomDestino,
+                              FechaCotizacion= C.FechaCotizacion,
+                              CostoTotal= C.CostoTotal,
+                          };
+            
+                         return Ok(vercoti);
         }
 
-        // GET: api/Cotizaciones/5
-        [HttpGet]
+
+        // GET: api/Cotizacion/5
+        /// <summary>
+        /// Obtiene todas las cotizaciones disponibles por su id
+        /// </summary>
+        /// <param name="id">Busqueda por id de cotizacion</param>
+        /// <returns>Lista de cotizacion por id</returns>
         public IHttpActionResult Get(int id)
         {
-            Cotizacion cotizacion = db.Cotizaciones
-                .Include(c => c.Cliente)
-                .Include(c => c.Agente_Responsable)
-                .Include(c => c.Paquete)
-                .FirstOrDefault(c => c.Id == id);
+            var vercoti = from C in db.Cotizaciones
+                          where C.Id == id
+                          join A in db.AgenteViajes
+                          on C.Agente_Responsable.Id equals A.Id
+                          join P in db.PaqueteTuristicos
+                          on C.Paquete.Id equals P.Id
+                          join Clien in db.Clientes
+                          on C.Cliente.Id equals Clien.Id
+                          select new
+                          {
+                              IdCotizacion = C.Id,
+                              cantidad_Personas = C.Cantidad_Personas,
+                              cliente = Clien.Nombre + " " + Clien.Apellido,
+                              Agente_Responsable = A.Nombre + " " + A.Apellido,
+                              Nombre_paquete = P.Nombre,
+                              destino = P.Destino.NomDestino,
+                              FechaCotizacion = C.FechaCotizacion,
+                              CostoTotal = C.CostoTotal,
+                          };
 
-            if (cotizacion == null) return NotFound();
-            return Ok(cotizacion);
+            return Ok(vercoti);
         }
 
-        // POST: api/Cotizaciones
-        [HttpPost]
+        // POST: api/Cotizacion
+        /// <summary>
+        /// Agrega una cotizacion
+        /// </summary>
+        /// <param name="cotizacion"></param>
+        /// <returns>Agrega una cotizacion a la base de datos</returns>
         public IHttpActionResult Post([FromBody] Cotizacion cotizacion)
         {
             try
             {
-                // Validación manual de relaciones
+                
                 Cliente cliente = db.Clientes.Find(cotizacion.Cliente.Id);
                 if (cliente == null)
                 { return BadRequest("Cliente no válido"); }
@@ -67,7 +108,7 @@ namespace AgenciadeViajes.Controllers
 
                 cotizacion.CostoTotal = cotizacion.Costo();
 
-                // Forzar fecha actual si es futura
+                
                 if (cotizacion.FechaCotizacion > DateTime.Now)
                     cotizacion.FechaCotizacion = DateTime.Now;
 
@@ -87,14 +128,16 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // PUT: api/Cotizaciones/5
-        [HttpPut]
+        // PUT: api/Cotizacion/5
+        /// <summary>
+        /// Actualiza una cotizacion por medio del id
+        /// </summary>
+        /// <param name="cotizacion"></param>
+        /// <returns>Actualizacion de cotizacion ya existentes</returns>
         public IHttpActionResult Put(Cotizacion cotizacion)
         {
             try
             {
-
-
                 var existente = db.Cotizaciones.Find(cotizacion.Id);
                 if (existente == null) return NotFound();
 
@@ -134,8 +177,12 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // DELETE: api/Cotizaciones/5
-        [HttpDelete]
+        // DELETE: api/Cotizacion/5
+        /// <summary>
+        /// Elimina la cotizacion por su id
+        /// </summary>
+        /// <param name="id">Busca por id para eliminar una cotizacion</param>
+        /// <returns></returns>
         public IHttpActionResult Delete(int id)
         {
             Cotizacion cotizacion = db.Cotizaciones.Find(id);

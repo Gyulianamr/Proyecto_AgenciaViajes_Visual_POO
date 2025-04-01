@@ -9,6 +9,7 @@ namespace AgenciadeViajes.Models
         private Destino _destino;
         private double _precioTotal;
         private DateTime _fechaExpiracion;
+        private int duracion_Dias;
         private bool _estado;
 
         public int DestinoId { get; set; }  // Agregar la clave foránea correcta
@@ -28,6 +29,9 @@ namespace AgenciadeViajes.Models
 
         public int? ActividadesId { get; set; }
         public virtual Actividades Actividades { get; set; }
+        public int Duracion_Dias {
+            get { return duracion_Dias; }
+            set { duracion_Dias = value; } }
 
         // Constructor vacío
         public Paquete_Turistico() { }
@@ -124,7 +128,7 @@ namespace AgenciadeViajes.Models
                 total += Vuelo.Precio;
 
             if (Hotel != null)
-                total += Hotel.Precio;
+                total += Hotel.Precio*Duracion_Dias;
 
             if (Seguro != null)
                 total += Seguro.Precio;
