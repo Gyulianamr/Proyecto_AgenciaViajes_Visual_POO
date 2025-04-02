@@ -8,9 +8,7 @@ namespace AgenciadeViajes.Models
         private string _nombre;
         private int _estrellas;
         private TipoHabitacion _tipohabitacion;
-      
         private string _direccion;
-        private double _precio;
 
         public Hotel() { }
 
@@ -19,7 +17,6 @@ namespace AgenciadeViajes.Models
         {
             Id = id;
             Nombre = nombre;
-            Precio = precio;
             Estrellas = estrellas;
             Direccion = direccion;
             Tipohabitacion = tipohabitacion;
@@ -49,16 +46,7 @@ namespace AgenciadeViajes.Models
             }
         }
 
-        public double Precio
-        {
-            get { return _precio; }
-            set
-            {
-                if (value < 0)
-                    throw new ArgumentException("El precio no puede ser negativo");
-                _precio = value;
-            }
-        }
+       
 
         public int Estrellas
         {

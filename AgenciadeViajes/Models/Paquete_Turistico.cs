@@ -128,7 +128,7 @@ namespace AgenciadeViajes.Models
                 total += Vuelo.Precio;
 
             if (Hotel != null)
-                total += Hotel.Precio*Duracion_Dias;
+                total += Hotel.Tipohabitacion.PrecioPorNoche*Duracion_Dias;
 
             if (Seguro != null)
                 total += Seguro.Precio;

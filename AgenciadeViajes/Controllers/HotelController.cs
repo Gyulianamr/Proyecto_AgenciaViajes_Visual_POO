@@ -1,12 +1,13 @@
 ﻿using AgenciadeViajes.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Web.Http;
-
 
 namespace AgenciadeViajes.Controllers
 {
-
     public class HotelController : ApiController
     {
         private Proyectodb db = new Proyectodb();
@@ -24,10 +25,13 @@ namespace AgenciadeViajes.Controllers
                            select new
                            {
                                HotelId = H.Id,
-                               NombreHabitacion = Th.NombreHabitacion
+                               NombreHotel= H.Nombre,
+                               NombreHabitacion = Th.NombreHabitacion,
+                               PrecioPornoche= Th.PrecioPorNoche
                            };
-            return Ok(verhotel );
 
+
+            return Ok(verhotel.ToList());
         }
 
         // GET: api/Hotel/5
@@ -56,7 +60,7 @@ namespace AgenciadeViajes.Controllers
                 {
                     return BadRequest("La habitacion no se encontro");
                 }
-                hotel.Tipohabitacion= tipohabitacion;
+                hotel.Tipohabitacion = tipohabitacion;
                 db.Hotel.Add(hotel);
                 db.SaveChanges();
                 return CreatedAtRoute("DefaultApi", new { id = hotel.Id }, hotel);
@@ -89,10 +93,10 @@ namespace AgenciadeViajes.Controllers
 
                 // Actualizar propiedades
                 hotelExistente.Nombre = hotel.Nombre;
-                hotelExistente.Precio = hotel.Precio;
+                hotelExistente.Tipohabitacion.PrecioPorNoche = hotel.Tipohabitacion.PrecioPorNoche;
                 hotelExistente.Estrellas = hotel.Estrellas;
                 hotelExistente.Direccion = hotel.Direccion;
-               
+
 
                 db.SaveChanges();
                 return Ok(hotelExistente);

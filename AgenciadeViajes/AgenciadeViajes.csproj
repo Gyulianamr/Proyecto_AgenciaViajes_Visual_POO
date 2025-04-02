@@ -177,7 +177,6 @@
     <Compile Include="Controllers\DestinoController.cs" />
     <Compile Include="Controllers\FacturasController.cs" />
     <Compile Include="Controllers\GuiaTuristicoController.cs" />
-    <Compile Include="Controllers\HistorialReservasCLientesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\HotelController.cs" />
     <Compile Include="Controllers\Metodo_PagoController.cs" />
@@ -202,7 +201,6 @@
     <Compile Include="Models\Empleado.cs" />
     <Compile Include="Models\Factura.cs" />
     <Compile Include="Models\GuiaTuristico.cs" />
-    <Compile Include="Models\Historial_ReservasClientes.cs" />
     <Compile Include="Models\Hotel.cs" />
     <Compile Include="Models\Metodo_Pago.cs" />
     <Compile Include="Models\Paquete_Turistico.cs" />
