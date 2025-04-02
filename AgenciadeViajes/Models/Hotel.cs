@@ -7,21 +7,22 @@ namespace AgenciadeViajes.Models
         private int _id;
         private string _nombre;
         private int _estrellas;
-        private bool _desayunoIncluido;
+        private TipoHabitacion _tipohabitacion;
+      
         private string _direccion;
         private double _precio;
 
         public Hotel() { }
 
         public Hotel(int id, string nombre, double precio, int estrellas,
-                   bool desayunoIncluido, string direccion)
+                 string direccion, TipoHabitacion tipohabitacion)
         {
             Id = id;
             Nombre = nombre;
             Precio = precio;
             Estrellas = estrellas;
-            DesayunoIncluido = desayunoIncluido;
             Direccion = direccion;
+            Tipohabitacion = tipohabitacion;
         }
 
         public int Id
@@ -70,11 +71,7 @@ namespace AgenciadeViajes.Models
             }
         }
 
-        public bool DesayunoIncluido
-        {
-            get { return _desayunoIncluido; }
-            set { _desayunoIncluido = value; }
-        }
+     
 
         public string Direccion
         {
@@ -89,6 +86,12 @@ namespace AgenciadeViajes.Models
 
                 _direccion = value;
             }
+        }
+
+        public TipoHabitacion Tipohabitacion
+        {
+            get { return _tipohabitacion; }
+            set {_tipohabitacion = value; }
         }
     }
 }

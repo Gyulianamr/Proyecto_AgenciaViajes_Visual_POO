@@ -210,6 +210,7 @@
     <Compile Include="Models\Proyectodb.cs" />
     <Compile Include="Models\Reservacion.cs" />
     <Compile Include="Models\Seguro.cs" />
+    <Compile Include="Models\TipoHabitacion.cs" />
     <Compile Include="Models\Vuelo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

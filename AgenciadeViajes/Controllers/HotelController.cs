@@ -16,9 +16,18 @@ namespace AgenciadeViajes.Controllers
         /// Obtiene todos los hoteles registrados
         /// </summary>
         /// <returns>Lista de todos los hoteles</returns>
-        public IEnumerable<Hotel> Get()
+        public IHttpActionResult Get()
         {
-            return db.Hotel;
+            var verhotel = from H in db.Hotel
+                           join Th in db.TiposdeHabitacion
+                           on H.Id equals Th.Id
+                           select new
+                           {
+                               HotelId = H.Id,
+                               NombreHabitacion = Th.NombreHabitacion
+                           };
+            return Ok(verhotel );
+
         }
 
         // GET: api/Hotel/5
@@ -42,6 +51,12 @@ namespace AgenciadeViajes.Controllers
         {
             try
             {
+                TipoHabitacion tipohabitacion = db.TiposdeHabitacion.Find(hotel.Tipohabitacion.Id);
+                if (tipohabitacion == null)
+                {
+                    return BadRequest("La habitacion no se encontro");
+                }
+                hotel.Tipohabitacion= tipohabitacion;
                 db.Hotel.Add(hotel);
                 db.SaveChanges();
                 return CreatedAtRoute("DefaultApi", new { id = hotel.Id }, hotel);
@@ -65,13 +80,19 @@ namespace AgenciadeViajes.Controllers
 
                 var hotelExistente = db.Hotel.Find(id);
                 if (hotelExistente == null) return NotFound();
+                TipoHabitacion tipohabitacion = db.TiposdeHabitacion.Find(hotel.Tipohabitacion.Id);
+                if (tipohabitacion == null)
+                {
+                    return BadRequest("La habitacion no se encontro");
+                }
+                hotel.Tipohabitacion = tipohabitacion;
 
                 // Actualizar propiedades
                 hotelExistente.Nombre = hotel.Nombre;
                 hotelExistente.Precio = hotel.Precio;
                 hotelExistente.Estrellas = hotel.Estrellas;
                 hotelExistente.Direccion = hotel.Direccion;
-                hotelExistente.DesayunoIncluido = hotel.DesayunoIncluido;
+               
 
                 db.SaveChanges();
                 return Ok(hotelExistente);

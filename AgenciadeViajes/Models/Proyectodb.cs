@@ -22,7 +22,7 @@ namespace AgenciadeViajes.Models
         public DbSet<GuiaTuristico> GuiaTuristicos { get; set; }
         public DbSet<Historial_ReservasClientes> HistorialClientes { get; set; }
         public DbSet<Cotizacion> Cotizaciones { get; set; }
-
+        public DbSet<TipoHabitacion> TiposdeHabitacion {  get; set; }
 
 
     }
