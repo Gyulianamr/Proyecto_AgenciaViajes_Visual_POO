@@ -10,54 +10,119 @@ using System.Web.Http;
 
 namespace AgenciadeViajes.Controllers
 {
-    [RoutePrefix("api/Reservaciones")]
+  
     public class ReservacionesController : ApiController
     {
+        
         private Proyectodb db = new Proyectodb();
 
-        // GET: api/Reservaciones
-        [HttpGet]
-    
-
-        
-        public IHttpActionResult Get(int id)
+        /// <summary>
+        /// Obtiene todas las reservaciones.
+        /// </summary>
+        /// <returns>Lista de reservaciones con sus detalles.</returns>
+        public IHttpActionResult Get()
         {
-            Reservacion reservacion = db.Reservas
-                .Include(r => r.Cotizacion)
-                .Include(r => r.Cotizacion.Paquete)
-                .FirstOrDefault(r => r.Id == id);
+            var VerReserva = from R in db.Reservas
+                             join C in db.Cotizaciones
+                             on R.Cotizacion.Id equals C.Id
+                             join cliente in db.Clientes
+                             on C.Cliente.Id equals cliente.Id
+                             join P in db.PaqueteTuristicos
+                             on C.Paquete.Id equals P.Id
+                             join D in db.Destinos
+                             on P.Destino.Id equals D.Id
+                             select new
+                             {
+                                 IdReservacion = R.Id,
+                                 FechaReservacion = R.FechaReservacion,
+                                 Idcotizacion = C.Id,
+                                 NombrePaquete = P.Nombre,
+                                 Destino = D.NomDestino,
+                                 cliente = cliente.Nombre,
+                                 FechaViaje = R.FechaViaje,
+                                 FechaRegreso = R.FechaRegreso,
+                                 MontoPagado = R.MontoPagado,
+                                 SaldoPendiente = R.Saldopendiente,
+                                 EstadoReserva = R.Estado,
+                             };
 
-            if (reservacion == null) return NotFound();
-            return Ok(reservacion);
+            if (VerReserva == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(VerReserva);
         }
 
-        // POST: api/Reservaciones
+        /// <summary>
+        /// Obtiene una reservación específica por su ID.
+        /// </summary>
+        /// <param name="id">ID de la reservación.</param>
+        /// <returns>Detalles de la reservación si se encuentra.</returns>
+        public IHttpActionResult Get(int id)
+        {
+            var VerReserva = from R in db.Reservas
+                             where R.Id == id
+                             join C in db.Cotizaciones
+                             on R.Cotizacion.Id equals C.Id
+                             join cliente in db.Clientes
+                             on C.Cliente.Id equals cliente.Id
+                             join P in db.PaqueteTuristicos
+                             on C.Paquete.Id equals P.Id
+                             join D in db.Destinos
+                             on P.Destino.Id equals D.Id
+                             select new
+                             {
+                                 IdReservacion = R.Id,
+                                 FechaReservacion = R.FechaReservacion,
+                                 Idcotizacion = C.Id,
+                                 NombrePaquete = P.Nombre,
+                                 Destino = D.NomDestino,
+                                 cliente = cliente.Nombre,
+                                 FechaViaje = R.FechaViaje,
+                                 FechaRegreso = R.FechaRegreso,
+                                 MontoPagado = R.MontoPagado,
+                                 SaldoPendiente = R.Saldopendiente,
+                                 EstadoReserva = R.Estado,
+                             };
+
+            if (VerReserva == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(VerReserva);
+        }
+
+        /// <summary>
+        /// Crea una nueva reservación.
+        /// </summary>
+        /// <param name="reservacion">Detalles de la reservación a crear.</param>
+        /// <returns>Reservación creada.</returns>
         [HttpPost]
         public IHttpActionResult Post([FromBody] Reservacion reservacion)
         {
             try
             {
-               
                 Cotizacion cotizacion = db.Cotizaciones.Find(reservacion.Cotizacion.Id);
                 if (cotizacion == null)
                     return BadRequest("Cotización no válida");
                 reservacion.Cotizacion = cotizacion;
 
-                // Validar la fecha de reservación: si se envía una fecha futura, se sobreescribe con la fecha actual
                 if (reservacion.FechaReservacion > DateTime.Now)
                     reservacion.FechaReservacion = DateTime.Now;
 
-                // Validar el monto pagado (no debe ser negativo)
                 if (reservacion.MontoPagado < 0)
                     return BadRequest("El monto pagado no puede ser negativo");
 
-                // Validar fechas del viaje
                 if (reservacion.FechaViaje < DateTime.Now)
                     return BadRequest("La fecha de viaje debe ser futura");
+
                 if (reservacion.FechaRegreso <= reservacion.FechaViaje)
                     return BadRequest("La fecha de regreso debe ser posterior a la fecha de viaje");
 
-                // Agregar la reservación y guardar los cambios
+                reservacion.Saldopendiente = reservacion.CalcularSaldoPendiente();
+
                 db.Reservas.Add(reservacion);
                 db.SaveChanges();
 
@@ -73,7 +138,11 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // PUT: api/Reservaciones
+        /// <summary>
+        /// Actualiza una reservación existente.
+        /// </summary>
+        /// <param name="reservacion">Detalles de la reservación a actualizar.</param>
+        /// <returns>Reservación actualizada.</returns>
         [HttpPut]
         public IHttpActionResult Put(Reservacion reservacion)
         {
@@ -82,18 +151,16 @@ namespace AgenciadeViajes.Controllers
                 var existente = db.Reservas.Find(reservacion.Id);
                 if (existente == null) return NotFound();
 
-                // Validar cotización
                 Cotizacion cotizacion = db.Cotizaciones.Find(reservacion.Cotizacion.Id);
                 if (cotizacion == null) return BadRequest("Cotización no válida");
                 existente.Cotizacion = cotizacion;
 
-                // Actualizar campos
                 existente.Estado = reservacion.Estado;
                 existente.FechaViaje = reservacion.FechaViaje;
                 existente.FechaRegreso = reservacion.FechaRegreso;
                 existente.MontoPagado = reservacion.MontoPagado;
+                existente.Saldopendiente = reservacion.Saldopendiente;
 
-                // Validar fechas
                 if (existente.FechaViaje < DateTime.Now)
                     return BadRequest("Fecha viaje debe ser futura");
 
@@ -110,7 +177,11 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // DELETE: api/Reservaciones/5
+        /// <summary>
+        /// Elimina una reservación específica por su ID.
+        /// </summary>
+        /// <param name="id">ID de la reservación a eliminar.</param>
+        /// <returns>Reservación eliminada.</returns>
         [HttpDelete]
         public IHttpActionResult Delete(int id)
         {
@@ -121,7 +192,5 @@ namespace AgenciadeViajes.Controllers
             db.SaveChanges();
             return Ok(reservacion);
         }
-
-        
     }
 }

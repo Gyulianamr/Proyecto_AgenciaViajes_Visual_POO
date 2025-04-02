@@ -141,7 +141,6 @@ namespace AgenciadeViajes.Controllers
                 var existente = db.Cotizaciones.Find(cotizacion.Id);
                 if (existente == null) return NotFound();
 
-                // Validación manual de relaciones
                 Cliente cliente = db.Clientes.Find(cotizacion.Cliente.Id);
                 if (cliente == null)
                 { return BadRequest("Cliente no válido"); }
@@ -163,7 +162,6 @@ namespace AgenciadeViajes.Controllers
 
                 cotizacion.CostoTotal = cotizacion.Costo();
 
-                // Forzar fecha actual si es futura
                 if (cotizacion.FechaCotizacion > DateTime.Now)
                     cotizacion.FechaCotizacion = DateTime.Now;
 
