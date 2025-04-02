@@ -189,6 +189,10 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202504020406222_SincronizacionModelos.cs" />
+    <Compile Include="Migrations\202504020406222_SincronizacionModelos.Designer.cs">
+      <DependentUpon>202504020406222_SincronizacionModelos.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Actividades.cs" />
     <Compile Include="Models\AgentedeViaje.cs" />
@@ -348,6 +352,11 @@
     <None Include="packages.config" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\202504020406222_SincronizacionModelos.resx">
+      <DependentUpon>202504020406222_SincronizacionModelos.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

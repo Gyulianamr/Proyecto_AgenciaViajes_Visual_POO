@@ -7,41 +7,107 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Threading;
+using Microsoft.Ajax.Utilities;
 
 namespace AgenciadeViajes.Controllers
 {
 
+    
     public class FacturasController : ApiController
     {
+       
         private Proyectodb db = new Proyectodb();
 
-        // GET: api/Factura
-        [HttpGet]
+        /// <summary>
+        /// Obtiene todas las facturas con detalles relacionados.
+        /// </summary>
+        /// <returns>Lista de facturas.</returns>
         public IHttpActionResult Get()
         {
-            var facturas = db.Factura.Include(f => f.Reservacion).ToList();
+            var facturas = from F in db.Factura
+                           join R in db.Reservas
+                           on F.Reservacion.Id equals R.Id
+                           join C in db.Cotizaciones
+                           on R.Cotizacion.Id equals C.Id
+                           join cliente in db.Clientes
+                           on C.Cliente.Id equals cliente.Id
+                           join P in db.PaqueteTuristicos
+                           on C.Paquete.Id equals P.Id
+                           join D in db.Destinos
+                           on P.Destino.Id equals D.Id
+                           select new
+                           {
+                               IdFactura = F.Id,
+                               cliente = C.Cliente.Nombre + " " + C.Cliente.Apellido,
+                               PaqueteTuristico = P.Nombre,
+                               Destino = D.NomDestino,
+                               TotalPagar = R.Saldopendiente,
+                               FechaPago = F.FechaPago,
+                               MetodoPago = F.MetodoPago.Nombre,
+                               MontoPagado = F.MontoPagado,
+                               Estado = F.Estado,
+                           };
+
+            if (facturas.Count() == 0)
+            {
+                return NotFound();
+            }
+
             return Ok(facturas);
         }
 
-        // GET: api/Factura/5
+        /// <summary>
+        /// Obtiene los detalles de una factura específica por su ID.
+        /// </summary>
+        /// <param name="id">ID de la factura a buscar.</param>
+        /// <returns>Factura encontrada, si existe.</returns>
         [HttpGet]
         public IHttpActionResult Get(int id)
         {
-            Factura factura = db.Factura
-                .Include(f => f.Reservacion)
-                .FirstOrDefault(f => f.Id == id);
+            var facturas = from F in db.Factura
+                           where F.Id == id
+                           join R in db.Reservas
+                           on F.Reservacion.Id equals R.Id
+                           join C in db.Cotizaciones
+                           on R.Cotizacion.Id equals C.Id
+                           join cliente in db.Clientes
+                           on C.Cliente.Id equals cliente.Id
+                           join P in db.PaqueteTuristicos
+                           on C.Paquete.Id equals P.Id
+                           join D in db.Destinos
+                           on P.Destino.Id equals D.Id
+                           select new
+                           {
+                               IdFactura = F.Id,
+                               cliente = C.Cliente.Nombre + " " + C.Cliente.Apellido,
+                               PaqueteTuristico = P.Nombre,
+                               Destino = D.NomDestino,
+                               TotalPagar = R.Saldopendiente,
+                               FechaPago = F.FechaPago,
+                               MetodoPago = F.MetodoPago.Nombre,
+                               MontoPagado = F.MontoPagado,
+                               Estado = F.Estado,
+                           };
 
-            if (factura == null) return NotFound();
-            return Ok(factura);
+            if (facturas == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(facturas);
         }
 
-        // POST: api/Factura
+        /// <summary>
+        /// Crea una nueva factura.
+        /// </summary>
+        /// <param name="factura">Objeto Factura con los datos necesarios para la creación.</param>
+        /// <returns>Factura creada.</returns>
         [HttpPost]
-        public IHttpActionResult Post([FromBody] Factura factura)
+        public IHttpActionResult Post(Factura factura)
         {
             try
             {
-                // Validar reservación
                 Reservacion reservacion = db.Reservas.Find(factura.Reservacion.Id);
                 if (reservacion == null)
                     return BadRequest("Reservación no válida");
@@ -49,22 +115,17 @@ namespace AgenciadeViajes.Controllers
                 Metodo_Pago metodo = db.MetododePagos.Find(factura.MetodoPago.Id);
                 if (metodo == null)
                 {
-                    return BadRequest("Metodo no válida");
+                    return BadRequest("Metodo no válido");
                 }
                 factura.MetodoPago = metodo;
                 factura.Reservacion = reservacion;
 
-                factura.Saldopendiente = reservacion.Cotizacion.Costo() - reservacion.MontoPagado;
-
-                // Validar la fecha de pago
                 if (factura.FechaPago > DateTime.Now)
                     return BadRequest("La fecha de pago no puede ser futura");
 
-                // Validar el monto pagado
                 if (factura.MontoPagado <= 0)
                     return BadRequest("El monto pagado debe ser mayor a 0");
 
-                // Agregar factura y guardar cambios
                 db.Factura.Add(factura);
                 db.SaveChanges();
                 return CreatedAtRoute("DefaultApi", new { id = factura.Id }, factura);
@@ -79,7 +140,11 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // PUT: api/Factura
+        /// <summary>
+        /// Actualiza los datos de una factura existente.
+        /// </summary>
+        /// <param name="factura">Objeto Factura con los datos a actualizar.</param>
+        /// <returns>Factura actualizada.</returns>
         [HttpPut]
         public IHttpActionResult Put(Factura factura)
         {
@@ -98,7 +163,6 @@ namespace AgenciadeViajes.Controllers
                 existente.MontoPagado = factura.MontoPagado;
                 existente.MetodoPago = factura.MetodoPago;
                 existente.Estado = factura.Estado;
-                existente.Saldopendiente = factura.Saldopendiente;
 
                 // Validar la fecha de pago
                 if (factura.FechaPago > DateTime.Now)
@@ -118,7 +182,11 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-        // DELETE: api/Factura/5
+        /// <summary>
+        /// Elimina una factura existente por su ID.
+        /// </summary>
+        /// <param name="id">ID de la factura a eliminar.</param>
+        /// <returns>Factura eliminada.</returns>
         [HttpDelete]
         public IHttpActionResult Delete(int id)
         {

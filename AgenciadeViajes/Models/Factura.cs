@@ -9,7 +9,6 @@ namespace AgenciadeViajes.Models
         private int _idPago;
         private Reservacion _reservacion;
         private DateTime _fechaPago;
-        public double Saldopendiente { get; set; }
         private double _montoPagado;
         private Metodo_Pago _metodoPago; 
         private string _estado;
@@ -26,7 +25,7 @@ namespace AgenciadeViajes.Models
             MontoPagado = montoPagado;
             MetodoPago = metodoPago;
             Estado = estado;
-            Saldopendiente = saldo;
+            
         }
 
         
