@@ -9,44 +9,59 @@ using System.Web.Http;
 
 namespace AgenciadeViajes.Controllers
 {
+    /// <summary>
+    /// Controlador de API para gestionar agentes de viaje.
+    /// </summary>
     public class AgentedeViajeController : ApiController
     {
-        /// <summary>
-        /// Contexto de base de datos del proyecto.
-        /// </summary>
+        // Contexto de base de datos del proyecto
         private Proyectodb db = new Proyectodb();
+
+        /// <summary>
+        /// Obtiene todos los agentes de viaje registrados.
+        /// </summary>
+        /// <returns>Lista de agentes de viaje.</returns>
         // GET: api/AgentedeViaje
         public IEnumerable<AgentedeViaje> Get()
         {
             return db.AgenteViajes;
         }
 
-
-            // GET: api/AgentedeViaje/5
-            public IHttpActionResult Get(int id)
+        /// <summary>
+        /// Obtiene un agente de viaje específico por su ID.
+        /// </summary>
+        /// <param name="id">ID del agente de viaje.</param>
+        /// <returns>Agente de viaje encontrado, si existe.</returns>
+        // GET: api/AgentedeViaje/5
+        public IHttpActionResult Get(int id)
+        {
+            try
             {
-                try
-                {
-                    var agente = db.AgenteViajes.Find(id);
-                    if (agente == null)
-                    {
-                        return NotFound();
-                    }
-                    return Ok(agente);
-                }
-                catch (Exception ex)
-                {
-                    return InternalServerError(new Exception("Ocurrió un error al obtener el agente de viaje.", ex));
-                }
-            }
-
-            // POST: api/AgentedeViaje
-            public IHttpActionResult Post(AgentedeViaje agente)
-            {
+                var agente = db.AgenteViajes.Find(id);
                 if (agente == null)
                 {
-                    return BadRequest("El agente de viaje no puede estar vacío.");
+                    return NotFound();
                 }
+                return Ok(agente);
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(new Exception("Ocurrió un error al obtener el agente de viaje.", ex));
+            }
+        }
+
+        /// <summary>
+        /// Crea un nuevo agente de viaje.
+        /// </summary>
+        /// <param name="agente">Objeto `AgentedeViaje` con los datos del nuevo agente.</param>
+        /// <returns>Agente de viaje creado.</returns>
+        // POST: api/AgentedeViaje
+        public IHttpActionResult Post(AgentedeViaje agente)
+        {
+            if (agente == null)
+            {
+                return BadRequest("El agente de viaje no puede estar vacío.");
+            }
 
             try
             {
@@ -60,13 +75,19 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-            // PUT: api/AgentedeViaje/5
-            public IHttpActionResult Put(int id, AgentedeViaje agente)
+        /// <summary>
+        /// Actualiza los datos de un agente de viaje existente.
+        /// </summary>
+        /// <param name="id">ID del agente de viaje a actualizar.</param>
+        /// <param name="agente">Objeto `AgentedeViaje` con los datos actualizados.</param>
+        /// <returns>Agente de viaje actualizado.</returns>
+        // PUT: api/AgentedeViaje/5
+        public IHttpActionResult Put(int id, AgentedeViaje agente)
+        {
+            if (agente == null || id != agente.Id)
             {
-                if (agente == null || id != agente.Id)
-                {
-                    return BadRequest("Los datos del agente de viaje no son válidos.");
-                }
+                return BadRequest("Los datos del agente de viaje no son válidos.");
+            }
 
             try
             {
@@ -86,16 +107,21 @@ namespace AgenciadeViajes.Controllers
             }
         }
 
-            // DELETE: api/AgentedeViaje/5
-            public IHttpActionResult Delete(int id)
+        /// <summary>
+        /// Elimina un agente de viaje específico por su ID.
+        /// </summary>
+        /// <param name="id">ID del agente de viaje a eliminar.</param>
+        /// <returns>Confirmación de eliminación.</returns>
+        // DELETE: api/AgentedeViaje/5
+        public IHttpActionResult Delete(int id)
+        {
+            try
             {
-                try
+                var agente = db.AgenteViajes.Find(id);
+                if (agente == null)
                 {
-                    var agente = db.AgenteViajes.Find(id);
-                    if (agente == null)
-                    {
-                        return NotFound();
-                    }
+                    return NotFound();
+                }
 
                 db.AgenteViajes.Remove(agente);
                 db.SaveChanges();
