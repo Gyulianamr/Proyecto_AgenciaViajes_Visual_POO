@@ -10,6 +10,7 @@ namespace AgenciadeViajes.Models
         private DateTime _fechaViaje;
         private DateTime _fechaRegreso;
         private double _montoPagado;
+        public double Saldopendiente {  get; set; }
 
         // Constructor vacío
         public Reservacion() { }
@@ -127,16 +128,17 @@ namespace AgenciadeViajes.Models
                 throw new ArgumentException("El monto pagado no puede ser negativo.");
             }
 
-            return Cotizacion.CostoTotal - MontoPagado;
+            Saldopendiente = Cotizacion.CostoTotal - MontoPagado;
+
+            return Saldopendiente;
         }
 
-        // Método para verificar si la reservación está pagada
+        
         public bool EsPagada()
         {
             return CalcularSaldoPendiente() == 0;
         }
 
-        // Método para generar descripción de la reservación
     }
 }
 
